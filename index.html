@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campfire 社群活動公告管理平台</title>
+<!-- 使用高相容性、防沙盒隔離阻斷的標準版 Tailwind CSS v3 Play CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+.canvas-block { transition: all 0.2s ease-in-out; }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen py-6 px-3 sm:px-4 text-slate-800">
+
+<div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+<!-- 頁首 -->
+<div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-6 text-white text-center shadow-md">
+<h1 class="text-lg sm:text-xl md:text-2xl font-extrabold tracking-wide">Campfire 社群活動公告管理平台</h1>
+<p class="text-sm md:text-base font-light mt-2.5 tracking-widest text-indigo-100/90">台中寶可夢 Pokémon GO</p>
+</div>
+
+<!-- 雙分頁標籤控制列 -->
+<div class="flex border-b border-slate-200 bg-slate-100 select-none p-1 gap-1">
+<button id="tabBtn1" onclick="switchTab('template')" class="flex-1 py-3 text-center font-bold text-sm sm:text-base text-indigo-600 rounded-xl bg-white shadow-sm transition-all focus:outline-none cursor-pointer">
+📅 見面會模板產生器
+</button>
+<button id="tabBtn2" onclick="switchTab('notice')" class="flex-1 py-3 text-center font-bold text-sm sm:text-base text-slate-500 hover:text-indigo-600 rounded-xl transition-all focus:outline-none cursor-pointer">
+📢 即時公告發布中心
+</button>
+</div>
+
+<!-- ==================== 🏠 分頁一：見面會模板產生器內容 ==================== -->
+<div id="tabContent1" class="p-4 sm:p-6 space-y-6">
+<!-- 💾 範本與草稿資料庫中心 -->
+<div class="bg-gradient-to-br from-teal-50 to-emerald-50 p-4 rounded-2xl border-2 border-emerald-200 space-y-4 shadow-sm">
+<h2 class="text-base font-bold text-emerald-800 flex items-center"><span class="mr-2">💾</span> 範本與草稿資料庫中心</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div>
+<label class="block text-xs font-bold text-slate-500 mb-1">📝 將目前整表（含自訂增刪與排序）儲存為新範本：</label>
+<div class="flex gap-2">
+<input type="text" id="templateNameInput" placeholder="例如：7/4木守宮社群日公告" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none">
+<button type="button" onclick="saveCurrentTemplate()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 rounded-xl shadow whitespace-nowrap transition cursor-pointer">儲存草稿</button>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 mb-1">🔄 快速自動讀取/刪除歷史本機存檔：</label>
+<div class="flex gap-2">
+<select id="savedTemplatesSelect" onchange="loadSelectedTemplate()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white text-emerald-900 font-semibold focus:outline-none"></select>
+<button type="button" onclick="deleteSelectedTemplate()" class="bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 text-xs font-bold px-3 rounded-xl shadow transition cursor-pointer">刪除</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 見面會時間與種類主控中心 -->
+<div class="bg-gradient-to-br from-indigo-50 to-slate-50 p-4 rounded-2xl border-2 border-indigo-200 space-y-4 shadow-sm">
+<h2 class="text-base sm:text-lg font-bold text-indigo-800 flex items-center"><span class="mr-2">📅</span> 見面會時間與種類控制中心（自動套用全欄位）</h2>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div>
+<label class="block text-xs font-bold text-gray-500 mb-1">選擇年份</label>
+<select id="selYear" onchange="updateDays()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-500 mb-1">選擇月份</label>
+<select id="selMonth" onchange="updateDays()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-500 mb-1">選擇日期</label>
+<select id="selDay" onchange="autoFillDateTime()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-indigo-100">
+<div>
+<label class="block text-xs font-bold text-gray-500 mb-1">見面會「開始」時間</label>
+<div class="flex items-center gap-2">
+<select id="selStartHour" onchange="autoFillDateTime()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+<span class="text-sm font-bold text-gray-400">：</span>
+<select id="selStartMinute" onchange="autoFillDateTime()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-500 mb-1">見面會「結束」時間</label>
+<div class="flex items-center gap-2">
+<select id="selEndHour" onchange="autoFillDateTime()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+<span class="text-sm font-bold text-gray-400">：</span>
+<select id="selEndMinute" onchange="autoFillDateTime()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+</div>
+</div>
+</div>
+<div class="pt-2 border-t border-indigo-100">
+<label class="block text-xs font-bold text-gray-500 mb-1">⚔️ 選擇活動種類</label>
+<select id="eventType" onchange="toggleCustomEvent()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white font-semibold text-indigo-900 focus:outline-none">
+<option value="社群日">社群日</option><option value="調查日">調查日</option><option value="孵化日">孵化日</option><option value="團體戰日">團體戰日</option><option value="團體戰週末">團體戰週末</option><option value="極巨對戰日">極巨對戰日</option><option value="極巨對戰週末">極巨對戰週末</option><option value="捕捉達人日">捕捉達人日</option><option value="GO Fest">GO Fest</option><option value="GO Tour">GO Tour</option><option value="GO Wild">GO Wild</option><option value="City Safari">City Safari</option><option value="其他">其他 (點擊自訂輸入)</option>
+</select>
+<div id="customEventTypeContainer" class="hidden mt-3 p-3 bg-indigo-100/50 rounded-xl border border-indigo-200">
+<label class="block text-xs font-bold text-indigo-700 mb-1">✍️ 請輸入自訂活動種類名稱：</label>
+<input type="text" id="customEventType" placeholder="例如：VIP團體戰" oninput="compileAllText()" class="w-full px-3 py-1.5 border border-indigo-300 rounded-lg text-sm bg-white focus:outline-none">
+</div>
+</div>
+</div>
+
+<!-- 重要公告設定 -->
+<div class="bg-red-50 p-4 rounded-2xl border border-red-200 space-y-3">
+<h2 class="text-base sm:text-lg font-bold text-red-700 flex items-center"><span class="bg-red-100 text-red-700 w-6 h-6 rounded-full inline-flex items-center justify-center mr-2 text-sm">📢</span>🚨 【當期重要公告】特別提醒（選填）</h2>
+<textarea id="importantNotice" oninput="compileAllText()" rows="2" placeholder="例如：活動日當天可能下雨，請注意見面會公告..." class="w-full px-3 py-2 border border-red-300 rounded-xl text-sm bg-white focus:outline-none shadow-sm"></textarea>
+</div>
+
+<!-- 第一部分 -->
+<div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-4">
+<h2 class="text-base sm:text-lg font-bold text-indigo-700 flex items-center"><span class="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full inline-flex items-center justify-center mr-2 text-sm">1</span>✨ 活動主題與活動舉辦者</h2>
+<div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+<label class="block text-sm font-bold text-gray-700 mb-2">👤 請問本次是由哪位活動舉辦者負責發布？</label>
+<div class="flex gap-4">
+<label class="inline-flex items-center bg-pink-50 px-4 py-2 rounded-xl border border-pink-200 cursor-pointer select-none">
+<input type="radio" name="heartSelect" value="🩷" checked class="w-4 h-4 text-pink-600" onchange="compileAllText()"><span class="ml-2 text-sm font-semibold text-pink-700">聖閎 (🩷)</span>
+</label>
+<label class="inline-flex items-center bg-blue-50 px-4 py-2 rounded-xl border border-blue-200 cursor-pointer select-none">
+<input type="radio" name="heartSelect" value="💙" class="w-4 h-4 text-blue-600" onchange="compileAllText()"><span class="ml-2 text-sm font-semibold text-blue-700">醫歪 (💙)</span>
+</label>
+</div>
+</div>
+<div>
+<label class="block text-sm font-semibold text-gray-700 mb-1">📅 活動日期代碼</label>
+<input type="text" id="dateCode" placeholder="自動同步中..." class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-slate-100 text-slate-400 font-mono cursor-not-allowed" readonly>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-semibold text-gray-700 mb-1">🏮 主角寶可夢的中文活動名稱？</label>
+<input type="text" id="nameZh" placeholder="例：木守宮社群日" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none" oninput="compileAllText()">
+</div>
+<div>
+<label class="block text-sm font-semibold text-gray-700 mb-1">🔤 該活動的英文官方名稱？</label>
+<input type="text" id="nameEn" placeholder="例：Treecko Community Day" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none" oninput="compileAllText()">
+</div>
+</div>
+</div>
+
+<!-- 第二部分 -->
+<div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+<h2 class="text-base sm:text-lg font-bold text-purple-700 flex items-center"><span class="bg-purple-100 text-purple-700 w-6 h-6 rounded-full inline-flex items-center justify-center mr-2 text-sm">2</span>📍 集合時地與見面會時段</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<label class="block text-xs font-bold text-gray-500 mb-1">👉 選擇「集合地點」</label>
+<select id="location" onchange="toggleCustomLocation()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white font-semibold text-purple-900 focus:outline-none">
+<option value="台中公園北門樓望月亭">台中公園北門樓望月亭</option><option value="其他">其他 (點擊自訂輸入)</option>
+</select>
+<div id="customLocationContainer" class="hidden mt-3 p-3 bg-purple-100/50 rounded-xl border border-purple-200">
+<label class="block text-xs font-bold text-purple-700 mb-1">✍️ 請輸入自訂集合地點：</label>
+<input type="text" id="customLocation" placeholder="例如：台中公園 補給站前" oninput="compileAllText()" class="w-full px-3 py-1.5 border border-purple-300 rounded-lg text-sm bg-white focus:outline-none">
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-500 mb-1">👉 預計在現場的「集合時間」</label>
+<div class="flex items-center gap-2">
+<select id="meetHour" onchange="compileAllText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+<span class="text-sm font-bold text-gray-400">：</span>
+<select id="meetMinute" onchange="compileAllText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-sm font-semibold text-gray-700 mb-1">🕒 見面會完整的「日期與時間段」</label>
+<input type="text" id="fullDatetime" placeholder="自動產生中..." class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-slate-100 text-slate-400 font-mono cursor-not-allowed" readonly>
+</div>
+</div>
+
+<!-- ================= 🌟 物理固定主要排列畫布 CONTAINER ================= -->
+<div id="mainCanvasContainer" class="space-y-6">
+
+<!-- 大項目 3：實體獎勵發放區 -->
+<div class="canvas-block bg-slate-50 rounded-2xl border border-slate-200 shadow-sm overflow-hidden" data-block-type="rewards">
+<div class="flex flex-wrap justify-between items-center bg-slate-200/80 px-4 py-2.5 border-b border-slate-300 gap-2 select-none">
+<div class="flex items-center gap-2">
+<span class="bg-indigo-600 text-white w-6 h-5 rounded-full inline-flex items-center justify-center text-xs font-bold block-idx-label">3.</span>
+<span class="text-sm font-bold text-slate-700">🎁 【實體獎勵發放】規則設定</span>
+</div>
+<div class="flex items-center gap-1 text-xs">
+<button type="button" onclick="moveBlockUp(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔼 上移大項</button>
+<button type="button" onclick="moveBlockDown(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔽 下移大項</button>
+<button type="button" onclick="removeBlock(this)" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-1 px-2 rounded border border-red-200 shadow-sm cursor-pointer">✕ 刪除</button>
+</div>
+</div>
+<div class="p-4 sm:p-5 space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-slate-500">配置各項實體好禮發放細則：</span>
+<button type="button" onclick="addRewardRow()" class="bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold py-1 px-2.5 rounded-lg shadow transition cursor-pointer">➕ 新增額外獎勵項目</button>
+</div>
+<div id="rewardsList" class="space-y-3">
+<div class="reward-row-item bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-sm space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-3">
+<div class="flex items-center justify-between sm:justify-start gap-2"><span class="font-bold text-pink-600 w-5 text-center select-none reward-idx-label">1.</span></div>
+<div class="grid grid-cols-3 gap-2 flex-1">
+<input type="text" value="活動紀念貼紙" class="col-span-1 px-2 py-1.5 border rounded-lg bg-slate-100 font-semibold text-xs sm:text-sm cursor-not-allowed" readonly><div class="col-span-2 flex flex-col gap-1.5">
+<select id="stickerRuleSelect" onchange="toggleStickerCustomInput();" class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none text-xs sm:text-sm bg-white font-medium text-pink-950">
+<option value="歡迎於集合時索取，數量有限，發完為止">歡迎於集合時索取，數量有限，發完為止</option>
+<option value="其他">其他 (點擊自訂輸入)</option>
+</select>
+<input type="text" id="stickerCustomInput" placeholder="請填寫自訂發放方式" oninput="compileAllText()" class="hidden w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none text-xs sm:text-sm">
+</div>
+</div>
+<div class="flex justify-end gap-1 text-xs pt-1 sm:pt-0 text-nowrap">
+<button type="button" onclick="moveRowUp(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔼</button>
+<button type="button" onclick="moveRowDown(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔽</button>
+<button type="button" onclick="removeRow(this, 'reward-row-item')" class="bg-white border border-red-200 px-1.5 py-0.5 text-red-500 rounded cursor-pointer">✕</button>
+</div>
+</div>
+<div class="reward-row-item bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-sm space-y-2 sm:space-y-0 sm:flex sm:items-start sm:gap-3">
+<div class="flex items-center justify-between sm:justify-start gap-2 pt-1.5"><span class="font-bold text-pink-600 w-5 text-center select-none reward-idx-label">2.</span></div>
+<div class="grid grid-cols-3 gap-2 flex-1">
+<input type="text" value="序號卡發放方式" class="reward-fixed-label col-span-1 px-2 py-1.5 border rounded-lg bg-slate-100 font-semibold text-xs sm:text-sm cursor-not-allowed" readonly>
+<textarea id="serialCardTextArea" placeholder="請填寫發放方式，支援多行輸入及換行編輯詳細支數規則..." oninput="compileAllText()" class="reward-textarea-input col-span-2 px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none text-xs sm:text-sm bg-white h-24 resize-y leading-relaxed"></textarea>
+</div>
+<div class="flex justify-end gap-1 text-xs pt-1 sm:pt-1.5 text-nowrap">
+<button type="button" onclick="moveRowUp(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded pointer">🔼</button>
+<button type="button" onclick="moveRowDown(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔽</button>
+<button type="button" onclick="removeRow(this, 'reward-row-item')" class="bg-white border border-red-200 px-1.5 py-0.5 text-red-500 rounded cursor-pointer">✕</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 大項目 4：活動內容時程表 -->
+<div class="canvas-block bg-slate-50 rounded-2xl border border-slate-200 shadow-sm overflow-hidden" data-block-type="activities">
+<div class="flex flex-wrap justify-between items-center bg-slate-200/80 px-4 py-2.5 border-b border-slate-300 gap-2 select-none">
+<div class="flex items-center gap-2">
+<span class="bg-indigo-600 text-white w-6 h-5 rounded-full inline-flex items-center justify-center text-xs font-bold block-idx-label">4.</span>
+<span class="text-sm font-bold text-slate-700">📋 【活動內容】時程表與彈性擴充</span>
+</div>
+<div class="flex items-center gap-1 text-xs">
+<button type="button" onclick="moveBlockUp(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔼 上移大項</button>
+<button type="button" onclick="moveBlockDown(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔽 下移大項</button>
+<button type="button" onclick="removeBlock(this)" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-1 px-2 rounded border border-red-200 shadow-sm cursor-pointer">✕ 刪除</button>
+</div>
+</div>
+<div class="p-4 sm:p-5 space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs font-bold text-slate-500">自由調配、增減或移動內部時程順序：</span>
+<button type="button" onclick="addActivityRow()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-1 px-2.5 rounded-lg shadow transition cursor-pointer">➕ 插入自訂活動內容</button>
+</div>
+<div id="activitiesList" class="space-y-3">
+<div class="act-row-item bg-slate-100 p-3 rounded-xl border border-slate-200 text-sm text-slate-600 flex gap-3 items-center" data-raw-text="進Campfire點擊「報到」，報到後進遊戲頁面領取限時調查（調查時限八小時）。（調查內容請詳閱群組頻道）">
+<span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">1.</span>
+<div class="flex-1 text-xs sm:text-sm">進Campfire點擊「報到」，報到後進遊戲頁面領取限時調查（調查時限八小時）。<br>（調查內容請詳閱群組頻道）</div>
+<div class="flex gap-1 text-xs text-nowrap">
+<button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔼</button>
+<button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔽</button>
+<button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border border-red-200 px-1 text-red-500 rounded cursor-pointer">✕</button>
+</div>
+</div>
+<div class="act-row-item bg-white p-3 rounded-xl border border-slate-300 shadow-sm text-sm flex gap-3 items-center">
+<span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">2.</span>
+<div class="flex-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+<div class="font-bold text-slate-700 text-xs sm:text-sm whitespace-nowrap">📸 大合照幾點拍？</div>
+<div class="flex items-center gap-1">
+<select id="photoHour" onchange="compileAllText()" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs"></select>
+<span class="text-xs font-bold text-gray-400">：</span>
+<select id="photoMinute" onchange="compileAllText()" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs"></select>
+</div>
+</div>
+<div class="flex gap-1 text-xs text-nowrap">
+<button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔼</button>
+<button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔽</button>
+<button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border border-red-200 px-1 text-red-500 rounded cursor-pointer">✕</button>
+</div>
+</div>
+<div class="act-row-item bg-white p-3 rounded-xl border border-slate-300 shadow-sm text-sm flex gap-3 items-center">
+<span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">3.</span>
+<div class="flex-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+<div class="font-bold text-slate-700 text-xs sm:text-sm whitespace-nowrap">⏳ 活動持續至幾點結束？</div>
+<div class="flex items-center gap-1">
+<select id="endTextHour" onchange="compileAllText()" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs"></select>
+<span class="text-xs font-bold text-gray-400">：</span>
+<select id="endTextMinute" onchange="compileAllText()" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs"></select>
+</div>
+</div>
+<div class="flex gap-1 text-xs text-nowrap">
+<button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔼</button>
+<button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔽</button>
+<button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border border-red-200 px-1 text-red-500 rounded cursor-pointer">✕</button>
+</div>
+</div>
+<div class="act-row-item bg-slate-100 p-3 rounded-xl border border-slate-200 text-sm text-slate-600 flex gap-3 items-center" data-raw-text="若有未盡事宜，主辦方可隨時調整。">
+<span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">4.</span>
+<div class="flex-1 text-xs sm:text-sm">若有未盡事宜，主辦方可隨時調整。</div>
+<div class="flex gap-1 text-xs text-nowrap">
+<button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔼</button>
+<button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔽</button>
+<button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border border-red-200 px-1 text-red-500 rounded cursor-pointer">✕</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 大項目 5：縣市防災設定 -->
+<div class="canvas-block bg-slate-50 rounded-2xl border border-slate-200 shadow-sm overflow-hidden" data-block-type="city-config">
+<div class="flex flex-wrap justify-between items-center bg-slate-200/80 px-4 py-2.5 border-b border-slate-300 gap-2 select-none">
+<div class="flex items-center gap-2">
+<span class="bg-indigo-600 text-white w-6 h-5 rounded-full inline-flex items-center justify-center text-xs font-bold block-idx-label">5.</span>
+<span class="text-sm font-bold text-slate-700">🌍 【注意事項】停班停課公告縣市設定</span>
+</div>
+<div class="flex items-center gap-1 text-xs">
+<button type="button" onclick="moveBlockUp(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔼 上移大項</button>
+<button type="button" onclick="moveBlockDown(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔽 下移大項</button>
+<button type="button" onclick="removeBlock(this)" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-1 px-2 rounded border border-red-200 shadow-sm cursor-pointer">✕ 刪除</button>
+</div>
+</div>
+<div class="p-4 sm:p-5">
+<label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">👉 請選擇活動舉辦的「縣市」</label>
+<select id="selCity" onchange="compileAllText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white font-semibold text-teal-900 focus:outline-none">
+<option value="台中市" selected>台中市</option><option value="台北市">台北市</option><option value="新北市">新北市</option><option value="桃園市">桃園市</option><option value="台南市">台南市</option><option value="高雄市">高雄市</option><option value="基隆市">基隆市</option><option value="新竹市">新竹市</option><option value="新竹縣">新竹縣</option><option value="苗栗縣">苗栗縣</option><option value="彰化縣">彰化縣</option><option value="南投縣">南投縣</option><option value="雲林縣">雲林縣</option><option value="嘉義市">嘉義市</option><option value="嘉義縣">嘉義縣</option><option value="屏東縣">屏東縣</option><option value="宜蘭縣">宜蘭縣</option><option value="花蓮縣">花蓮縣</option><option value="台東縣">台東縣</option><option value="澎湖縣">澎湖縣</option><option value="金門縣">金門縣</option><option value="連江縣">連江縣</option>
+</select>
+</div>
+</div>
+
+</div>
+
+<!-- 新增自訂大項目按鈕 -->
+<div class="border-t-2 border-dashed border-slate-300 pt-4">
+<button type="button" onclick="addNewBigGroup()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-90 text-white font-black py-4 px-6 rounded-2xl shadow-md text-center text-sm cursor-pointer transition">
+➕ 新增自訂大項目（自動包覆【】大標題區塊）
+</button>
+</div>
+
+<!-- 分頁一專屬物理獨立輸出生成底座 -->
+<div class="pt-6 border-t border-slate-200 space-y-4">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<button onclick="compileAllText()" class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-90 text-white font-extrabold py-4 px-6 rounded-2xl shadow-xl text-center text-md cursor-pointer">🚀 同步生成「標題」與「內容」</button>
+<!-- 🏃‍♂️ 開啟 Campfire 官方 App 的專屬跳轉鍵 -->
+<button onclick="goToCampfireApp()" class="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:opacity-90 text-white font-extrabold py-4 px-6 rounded-2xl shadow-xl text-center text-md cursor-pointer flex items-center justify-center gap-2 transition">
+🔥 開啟 Campfire App 建立見面會
+</button>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="flex flex-col space-y-2">
+<label class="text-sm font-bold text-slate-700">📌 【第一區：Campfire 活動標題】</label>
+<div class="flex items-center gap-2">
+<button onclick="copyField('previewTitleTab1', 'titleToast1')" class="bg-indigo-100 text-indigo-700 text-xs font-bold py-1.5 px-3 rounded-lg cursor-pointer">📋 複製標題</button>
+<div id="titleToast1" class="hidden text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">✨ 複製成功！</div>
+</div>
+<textarea id="previewTitleTab1" rows="3" class="w-full p-4 bg-slate-900 text-green-400 font-mono text-sm rounded-xl border border-slate-800 focus:outline-none shadow-inner leading-relaxed" readonly></textarea>
+</div>
+<div class="flex flex-col space-y-2">
+<label class="text-sm font-bold text-slate-700">📝 【第二區：Campfire 詳細公告內容】</label>
+<div class="flex items-center gap-2">
+<button onclick="copyField('previewContentTab1', 'contentToast1')" class="bg-purple-100 text-purple-700 text-xs font-bold py-1.5 px-3 rounded-lg cursor-pointer">📋 複製公告</button>
+<div id="contentToast1" class="hidden text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">✨ 複製成功！</div>
+</div>
+<textarea id="previewContentTab1" rows="15" class="w-full p-4 bg-slate-900 text-slate-100 font-mono text-sm rounded-xl border border-slate-800 focus:outline-none shadow-inner leading-relaxed" readonly></textarea>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- ==================== 📢 分頁二：即時公告發布中心 ==================== -->
+<div id="tabContent2" class="p-4 sm:p-6 space-y-6 hidden">
+<div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-2xl border-2 border-purple-200 space-y-4 shadow-sm">
+<h2 class="text-base font-bold text-purple-800 flex items-center"><span class="mr-2">📢</span>選擇即時官方公告範本種類</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div>
+<label class="block text-xs font-bold text-gray-500 mb-1">📅 設定公告套用日期（月/日）</label>
+<div class="flex gap-2">
+<select id="noticeMonth" onchange="compileNoticeText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+<select id="noticeDay" onchange="compileNoticeText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-500 mb-1">📋 請選擇公告情境主題</label>
+<select id="noticeTypeSelect" onchange="switchNoticeTemplate()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white font-bold text-purple-900 focus:outline-none cursor-pointer">
+<option value="1">1. 極巨對戰日地點公告</option>
+<option value="2">2. 下雨天預告公告</option>
+<option value="3">3. 見面會取消公告（下雨）</option>
+</select>
+</div>
+</div>
+</div>
+
+<!-- 公告欄位連動資料 -->
+<div id="noticeFieldsContainer" class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-4">
+<h3 class="text-sm font-bold text-slate-700 border-b border-slate-200 pb-2">✍️ 請填寫公告連動欄位資料：</h3>
+<div id="noticeTypeFields1" class="space-y-3">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div>
+<label class="block text-xs font-bold text-gray-600 mb-1">🏮 本次活動主角寶可夢</label>
+<input type="text" id="noticeHeroInput" placeholder="例如：木守宮" oninput="compileNoticeText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none">
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-600 mb-1">🎯 發放對戰規則方式</label>
+<input type="text" id="noticeRuleInput" placeholder="例如：iv67（10/10/10）" oninput="compileNoticeText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none">
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div>
+<label class="block text-xs font-bold text-gray-600 mb-1">🏆 限量序號卡名額</label>
+<input type="number" id="noticeLimitInput" placeholder="例如：30" oninput="compileNoticeText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none">
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-600 mb-1">🔗 見面會 Campfire 連結</label>
+<input type="text" id="noticeUrlInput" placeholder="請貼上活動連結" oninput="compileNoticeText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none">
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-600 mb-1">🕒 結束時間軸段</label>
+<div class="flex items-center gap-1">
+<select id="noticeEndHourSelect" onchange="compileNoticeText()" class="w-full px-2 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+<span class="text-xs font-bold text-gray-400">：</span>
+<select id="noticeEndMinuteSelect" onchange="compileNoticeText()" class="w-full px-2 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+</div>
+</div>
+</div>
+</div>
+
+<div id="noticeTypeFields2" class="space-y-3 hidden">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div>
+<label class="block text-xs font-bold text-gray-600 mb-1">⚔️ 活動種類名稱</label>
+<select id="noticeEventDropdown" onchange="toggleNoticeCustomEvent()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none"></select>
+<div id="noticeCustomEventTypeContainer" class="hidden mt-2 p-2 bg-purple-100/50 rounded-xl border border-purple-200">
+<label class="block text-[11px] font-bold text-purple-700 mb-1">✍️ 請輸入自訂活動種類：</label>
+<input type="text" id="noticeCustomEventType" placeholder="例如：VIP團體戰" oninput="compileNoticeText()" class="w-full px-2 py-1 border border-purple-300 rounded-lg text-xs bg-white focus:outline-none">
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold text-gray-600 mb-1">🌧️ 氣候影響內容描述</label>
+<input type="text" id="noticeRainReason" placeholder="例如：鋒面和西南風、xx颱風" oninput="compileNoticeText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none">
+</div>
+</div>
+</div>
+<div id="noticeTypeFields3" class="text-xs text-slate-400 italic hidden">本取消通知範本不需額外輸入變數，日期將隨上方全自動更新帶入。</div>
+</div>
+
+<!-- 分頁二專屬物理獨立輸出生成底座 -->
+<div class="pt-6 border-t border-slate-200 space-y-4">
+<button onclick="compileNoticeText()" class="w-full bg-gradient-to-r from-emerald-500 via-teal-600 to-cyan-600 hover:opacity-90 text-white font-extrabold py-4 px-6 rounded-2xl shadow-xl text-center block text-md cursor-pointer">🚀 生成公告內容</button>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="flex flex-col space-y-2">
+<label class="text-sm font-bold text-slate-700">📌 【第一區：LINE 社群公告專用】</label>
+<div class="flex items-center gap-2">
+<button onclick="copyField('previewTitleTab2', 'titleToast2')" class="bg-indigo-100 text-indigo-700 text-xs font-bold py-1.5 px-3 rounded-lg cursor-pointer">📋 複製公告</button>
+<div id="titleToast2" class="hidden text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">✨ 複製成功！</div>
+</div>
+<textarea id="previewTitleTab2" rows="15" class="w-full p-4 bg-slate-900 text-green-400 font-mono text-sm rounded-xl border border-slate-800 focus:outline-none shadow-inner leading-relaxed" readonly></textarea>
+</div>
+<div class="flex flex-col space-y-2">
+<label class="text-sm font-bold text-slate-700">📝 【第二區：Campfire 官方公告專用】</label>
+<div class="flex items-center gap-2">
+<button onclick="copyField('previewContentTab2', 'contentToast2')" class="bg-purple-100 text-purple-700 text-xs font-bold py-1.5 px-3 rounded-lg self-start cursor-pointer">📋 複製公告</button>
+<div id="contentToast2" class="hidden text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">✨ 複製成功！</div>
+</div>
+<textarea id="previewContentTab2" rows="15" class="w-full p-4 bg-slate-900 text-purple-400 font-mono text-sm rounded-xl border border-slate-800 focus:outline-none shadow-inner leading-relaxed" readonly></textarea>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 頁尾版權核心宣告區 -->
+<div id="sharedFooter" class="text-center py-6 text-xs text-slate-400 border-t border-slate-200 tracking-wider bg-slate-50">
+© 2026 台中寶可夢 Pokémon GO. 版權所有
+</div>
+</div>
+
+<!-- ==================== JAVASCRIPT 全新安全純資料控制引擎 ==================== -->
+<script>
+let currentTab = 'template';
+let groupCounter = 0;
+
+window.onload = function() {
+initSelectOptions();
+};
+
+function initSelectOptions() {
+const yearSel = document.getElementById('selYear');
+const monthSel = document.getElementById('selMonth');
+const daySel = document.getElementById('selDay');
+if(!yearSel || !monthSel || !daySel) return;
+
+yearSel.innerHTML = ''; monthSel.innerHTML = '';
+for(let y = 2026; y <= 2035; y++) { yearSel.options.add(new Option(y + '年', String(y))); }
+for(let m = 1; m <= 12; m++) { monthSel.options.add(new Option(m + '月', String(m))); }
+
+const hourSels = ['selStartHour', 'selEndHour', 'meetHour', 'photoHour', 'endTextHour', 'noticeEndHourSelect'];
+hourSels.forEach(id => {
+const sel = document.getElementById(id);
+if(sel) {
+sel.innerHTML = '';
+for(let h = 0; h <= 23; h++) {
+let p = h.toString().padStart(2, '0');
+sel.options.add(new Option(p + '點', p));
+}
+}
+});
+document.getElementById('noticeEndHourSelect').value = "17";
+
+const minSels = ['selStartMinute', 'selEndMinute', 'meetMinute', 'photoMinute', 'endTextMinute', 'noticeEndMinuteSelect'];
+minSels.forEach(id => {
+const sel = document.getElementById(id);
+if(sel) {
+sel.innerHTML = '';
+for(let m = 0; m <= 59; m++) {
+let p = m.toString().padStart(2, '0');
+sel.options.add(new Option(p + '分', p));
+}
+}
+});
+document.getElementById('noticeEndMinuteSelect').value = "00";
+
+const nMonth = document.getElementById('noticeMonth');
+nMonth.innerHTML = '';
+for(let m = 1; m <= 12; m++) { nMonth.options.add(new Option(m + '月', String(m))); }
+
+const nDay = document.getElementById('noticeDay');
+nDay.innerHTML = '';
+for(let d = 1; d <= 31; d++) { nDay.options.add(new Option(d + '日', String(d))); }
+
+const nEventDropdown = document.getElementById('noticeEventDropdown');
+nEventDropdown.innerHTML = '';
+const eventTypes = ["社群日", "調查日", "孵化日", "團體戰日", "團體戰週末", "極巨對戰日", "極巨對戰週末", "捕捉達人日", "GO Fest", "GO Tour", "GO Wild", "City Safari", "其他"];
+eventTypes.forEach(val => { nEventDropdown.options.add(new Option(val, val)); });
+
+// 預設時段設定
+document.getElementById('selStartHour').value = "14";
+document.getElementById('selStartMinute').value = "00";
+document.getElementById('selEndHour').value = "17";
+document.getElementById('selEndMinute').value = "00";
+
+// 智慧定位當前系統真實日期 (2026年)
+const today = new Date();
+yearSel.value = String(today.getFullYear());
+monthSel.value = String(today.getMonth() + 1);
+nMonth.value = String(today.getMonth() + 1);
+
+updateDays();
+
+daySel.value = String(today.getDate());
+nDay.value = String(today.getDate());
+
+autoFillDateTime();
+refreshTemplateList();
+}
+
+function switchTab(tabId) {
+currentTab = tabId;
+const isTemplate = tabId === 'template';
+document.getElementById('tabContent1').classList.toggle('hidden', !isTemplate);
+document.getElementById('tabContent2').classList.toggle('hidden', isTemplate);
+
+const btn1 = document.getElementById('tabBtn1');
+const btn2 = document.getElementById('tabBtn2');
+
+if (isTemplate) {
+btn1.className = "flex-1 py-3 text-center font-bold text-sm sm:text-base text-indigo-600 rounded-xl bg-white shadow-sm transition-all focus:outline-none cursor-pointer";
+btn2.className = "flex-1 py-3 text-center font-bold text-sm sm:text-base text-slate-500 hover:text-indigo-600 rounded-xl transition-all focus:outline-none cursor-pointer";
+compileAllText();
+} else {
+btn1.className = "flex-1 py-3 text-center font-bold text-sm sm:text-base text-slate-500 hover:text-indigo-600 rounded-xl transition-all focus:outline-none cursor-pointer";
+btn2.className = "flex-1 py-3 text-center font-bold text-sm sm:text-base text-indigo-600 rounded-xl bg-white shadow-sm transition-all focus:outline-none cursor-pointer";
+compileNoticeText();
+}
+}
+
+function switchNoticeTemplate() {
+const selected = document.getElementById('noticeTypeSelect').value;
+document.getElementById('noticeTypeFields1').classList.toggle('hidden', selected !== '1');
+document.getElementById('noticeTypeFields2').classList.toggle('hidden', selected !== '2');
+document.getElementById('noticeTypeFields3').classList.toggle('hidden', selected !== '3');
+compileNoticeText();
+}
+
+function updateDays() {
+const year = parseInt(document.getElementById('selYear').value) || 2026;
+const month = parseInt(document.getElementById('selMonth').value) || 6;
+const daySel = document.getElementById('selDay');
+if(!daySel) return;
+
+const currentSelectedDay = daySel.value || "1";
+const daysInMonth = new Date(year, month, 0).getDate();
+
+daySel.innerHTML = '';
+for(let d = 1; d <= daysInMonth; d++) { daySel.options.add(new Option(d + '日', String(d))); }
+
+if (parseInt(currentSelectedDay) <= daysInMonth) {
+daySel.value = currentSelectedDay;
+} else {
+daySel.value = String(daysInMonth);
+}
+autoFillDateTime();
+}
+
+function toggleCustomEvent() {
+document.getElementById('customEventTypeContainer').classList.toggle('hidden', document.getElementById('eventType').value !== '其他');
+compileAllText();
+}
+
+function toggleCustomLocation() {
+document.getElementById('customLocationContainer').classList.toggle('hidden', document.getElementById('location').value !== '其他');
+compileAllText();
+}
+
+function toggleStickerCustomInput() {
+const block = document.querySelector('[data-block-type="rewards"]');
+if (block) {
+const selectVal = block.querySelector('#stickerRuleSelect').value;
+block.querySelector('#stickerCustomInput').classList.toggle('hidden', selectVal !== '其他');
+}
+compileAllText();
+}
+
+function toggleNoticeCustomEvent() {
+const dropdownVal = document.getElementById('noticeEventDropdown').value;
+document.getElementById('noticeCustomEventTypeContainer').classList.toggle('hidden', dropdownVal !== '其他');
+compileNoticeText();
+}
+
+function autoFillDateTime() {
+const yearSel = document.getElementById('selYear');
+const monthSel = document.getElementById('selMonth');
+const daySel = document.getElementById('selDay');
+if(!yearSel || !monthSel || !daySel) return;
+
+const year = yearSel.value;
+const month = String(monthSel.value);
+const day = String(daySel.value || "1");
+const startH = parseInt(document.getElementById('selStartHour').value) || 14;
+const startM = parseInt(document.getElementById('selStartMinute').value) || 0;
+const endH = document.getElementById('selEndHour').value;
+const endM = document.getElementById('selEndMinute').value;
+
+document.getElementById('dateCode').value = month.padStart(2, '0') + day.padStart(2, '0');
+
+const weeks = ['日', '一', '二', '三', '四', '五', '六'];
+const dayOfWeek = weeks[new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).getDay()];
+document.getElementById('fullDatetime').value = `${month}/${day}（星期${dayOfWeek}）${startH.toString().padStart(2, '0')}:${startM.toString().padStart(2, '0')}～${endH}:${endM}`;
+
+let meetTotalMins = startH * 60 + startM - 20;
+if (meetTotalMins < 0) meetTotalMins += 24 * 60;
+document.getElementById('meetHour').value = Math.floor(meetTotalMins / 60).toString().padStart(2, '0');
+document.getElementById('meetMinute').value = (meetTotalMins % 60).toString().padStart(2, '0');
+
+const photoH = Math.floor((startH * 60 + startM - 10) / 60).toString().padStart(2, '0');
+const photoM = ((startH * 60 + startM - 10) % 60).toString().padStart(2, '0');
+
+const pHourNode = document.getElementById('photoHour');
+const pMinNode = document.getElementById('photoMinute');
+const eHourNode = document.getElementById('endTextHour');
+const eMinNode = document.getElementById('endTextMinute');
+
+if (pHourNode) pHourNode.value = photoH;
+if (pMinNode) pMinNode.value = photoM;
+if (eHourNode) eHourNode.value = endH;
+if (eMinNode) eMinNode.value = endM;
+
+compileAllText();
+}
+
+/* ------------------ 👑 萬能物理 DOM 絕對位移引擎（上移/下移/刪除 100% 正常） ------------------ */
+function moveBlockUp(btn) {
+const block = btn.closest('.canvas-block');
+if (block && block.previousElementSibling) { block.parentNode.insertBefore(block, block.previousElementSibling); reindexMainBlocks(); compileAllText(); }
+}
+function moveBlockDown(btn) {
+const block = btn.closest('.canvas-block');
+if (block && block.nextElementSibling) { block.parentNode.insertBefore(block.nextElementSibling, block); reindexMainBlocks(); compileAllText(); }
+}
+function removeBlock(btn) {
+const block = btn.closest('.canvas-block');
+if (block && confirm("確定要完全移除此大項目區塊嗎？")) { block.remove(); reindexMainBlocks(); compileAllText(); }
+}
+function reindexMainBlocks() {
+const blocks = document.getElementById('mainCanvasContainer').children;
+for (let i = 0; i < blocks.length; i++) {
+let lbl = blocks[i].querySelector('.block-idx-label');
+if (lbl) lbl.innerText = (i + 3) + ".";
+}
+}
+
+function moveRowUp(btn, rowClass) {
+const row = btn.closest('.' + rowClass);
+if (row && row.previousElementSibling) { row.parentNode.insertBefore(row, row.previousElementSibling); reindexRows(row.parentNode, rowClass); compileAllText(); }
+}
+function moveRowDown(btn, rowClass) {
+const row = btn.closest('.' + rowClass);
+if (row && row.nextElementSibling) { row.parentNode.insertBefore(row, row.nextElementSibling); reindexRows(row.parentNode, rowClass); compileAllText(); }
+}
+function removeRow(btn, rowClass) {
+const row = btn.closest('.' + rowClass);
+if (row) { const parent = row.parentNode; row.remove(); reindexRows(parent, rowClass); compileAllText(); }
+}
+function reindexRows(container, rowClass) {
+const rows = container.querySelectorAll('.' + rowClass);
+let labelSelector = '.sub-item-idx';
+if (rowClass === 'reward-row-item') labelSelector = '.reward-idx-label';
+if (rowClass === 'act-row-item') labelSelector = '.act-idx-label';
+rows.forEach((row, i) => {
+const lbl = row.querySelector(labelSelector);
+if (lbl) lbl.innerText = (i + 1) + ".";
+});
+}
+
+/* ------------------ 子流程小格子動態添加器 ------------------ */
+function addRewardRow(titleVal = '', valVal = '') {
+const container = document.getElementById('rewardsList');
+if (!container) return;
+const nextIdx = container.children.length + 1;
+const row = document.createElement('div');
+row.className = "reward-row-item bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-sm space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-3";
+row.innerHTML = `
+<div class="flex items-center justify-between sm:justify-start gap-2"><span class="font-bold text-sm text-pink-600 w-5 text-center select-none reward-idx-label">${nextIdx}.</span></div>
+<div class="grid grid-cols-3 gap-2 flex-1">
+<input type="text" value="${titleVal}" placeholder="加碼項目" class="reward-title col-span-1 px-2 py-1.5 border border-pink-300 rounded-lg text-xs font-semibold bg-white focus:outline-none">
+<input type="text" value="${valVal}" placeholder="請填寫發放規則方式" oninput="compileAllText()" class="reward-val col-span-2 px-2 py-1.5 border border-pink-300 rounded-lg text-xs focus:outline-none bg-white">
+</div>
+<div class="flex justify-end gap-1 text-xs pt-1 sm:pt-0 text-nowrap">
+<button type="button" onclick="moveRowUp(this, 'reward-row-item')" class="bg-slate-50 border px-1.5 py-0.5 rounded cursor-pointer">🔼</button>
+<button type="button" onclick="moveRowDown(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔽</button>
+<button type="button" onclick="removeRow(this, 'reward-row-item')" class="bg-white border text-red-500 rounded px-1.5 py-0.5 cursor-pointer">✕</button>
+</div>
+`;
+container.appendChild(row); compileAllText();
+}
+
+function addActivityRow(valVal = '') {
+const container = document.getElementById('activitiesList');
+if (!container) return;
+const nextIdx = container.children.length;
+const lastNode = container.lastElementChild;
+const row = document.createElement('div');
+row.className = "act-row-item bg-white p-3 rounded-xl border border-amber-200 shadow-sm text-sm flex gap-3 items-center";
+row.innerHTML = `
+<span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">${nextIdx}.</span>
+<input type="text" value="${valVal}" placeholder="請輸入流程" oninput="compileAllText()" class="custom-act-input flex-1 px-3 py-2 border border-amber-300 rounded-xl bg-white focus:outline-none text-xs sm:text-sm">
+<div class="flex gap-1 text-xs text-nowrap">
+<button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-slate-50 border px-1.5 py-0.5 rounded cursor-pointer">🔼</button>
+<button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔽</button>
+<button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border text-red-500 rounded px-1.5 py-0.5 cursor-pointer">✕</button>
+</div>
+`;
+container.insertBefore(row, lastNode);
+reindexRows(container, 'act-row-item');
+compileAllText();
+}
+
+/* ------------------ 🟢 核心修正：自訂大項目嵌入防死鎖（100% 復活） ------------------ */
+function addNewBigGroup(titleVal = '') {
+groupCounter++;
+const container = document.getElementById('mainCanvasContainer');
+if(!container) return;
+
+// 使用 insertAdjacentHTML 防止覆蓋現有畫布元件的值
+const groupHtml = createCustomBlockHtml(groupCounter, titleVal);
+container.insertAdjacentHTML('beforeend', groupHtml);
+
+const newBlock = document.getElementById(`big-group-${groupCounter}`);
+createSubItemRowInBlock(newBlock.querySelector('.add-sub-btn'));
+
+reindexMainBlocks();
+compileAllText();
+}
+
+function createSubItemRowInBlock(target, textVal = '') {
+const block = target.closest('.canvas-block');
+if (!block) return;
+const subContainer = block.querySelector('.sub-items-box');
+if (!subContainer) return;
+
+const rowHtml = createSubItemRowHtml(textVal);
+subContainer.insertAdjacentHTML('beforeend', rowHtml);
+
+reindexRows(subContainer, 'sub-row-item');
+compileAllText();
+}
+
+/* ------------------ 💾 🚀 純資料驅動 JSON 存取（重整網頁絕不丟失） ------------------ */
+function saveCurrentTemplate() {
+const name = document.getElementById('templateNameInput').value.trim();
+if(!name) { alert('請先填寫欲儲存的草稿名稱！'); return; }
+
+const stateData = {
+meta: {
+importantNotice: document.getElementById('importantNotice').value,
+selYear: document.getElementById('selYear').value,
+selMonth: document.getElementById('selMonth').value,
+selDay: document.getElementById('selDay').value,
+selStartHour: document.getElementById('selStartHour').value,
+selStartMinute: document.getElementById('selStartMinute').value,
+selEndHour: document.getElementById('selEndHour').value,
+selEndMinute: document.getElementById('selEndMinute').value,
+eventType: document.getElementById('eventType').value,
+customEventType: document.getElementById('customEventType').value,
+heartSelect: document.querySelector('input[name="heartSelect"]:checked')?.value || '🩷',
+nameZh: document.getElementById('nameZh').value,
+nameEn: document.getElementById('nameEn').value,
+location: document.getElementById('location').value,
+customLocation: document.getElementById('customLocation').value
+},
+blocks: []
+};
+
+const canvasBlocks = document.getElementById('mainCanvasContainer').children;
+for (let i = 0; i < canvasBlocks.length; i++) {
+let block = canvasBlocks[i];
+let bType = block.getAttribute('data-block-type');
+let bObj = { type: bType };
+
+if (bType === 'rewards') {
+bObj.stickerRule = block.querySelector('#stickerRuleSelect')?.value || '';
+bObj.stickerCustom = block.querySelector('#stickerCustomInput')?.value || '';
+bObj.serialVal = block.querySelector('#serialCardTextArea')?.value || '';
+bObj.extraRewards = [];
+block.querySelectorAll('#rewardsList .reward-row-item').forEach((row, rIdx) => {
+if (rIdx >= 2) {
+bObj.extraRewards.push({
+title: row.querySelector('.reward-title')?.value || '',
+val: row.querySelector('.reward-val')?.value || ''
+});
+}
+});
+} else if (bType === 'activities') {
+bObj.photoH = block.querySelector('#photoHour')?.value || '';
+bObj.photoM = block.querySelector('#photoMinute')?.value || '';
+bObj.endH = block.querySelector('#endTextHour')?.value || '';
+bObj.endM = block.querySelector('#endTextMinute')?.value || '';
+bObj.extraActs = [];
+block.querySelectorAll('#activitiesList .act-row-item').forEach((row, aIdx) => {
+if (aIdx !== 0 && !row.querySelector('select') && aIdx !== (block.querySelectorAll('#activitiesList .act-row-item').length - 1)) {
+bObj.extraActs.push(row.querySelector('.custom-act-input')?.value || '');
+}
+});
+} else if (bType === 'city-config') {
+bObj.city = block.querySelector('#selCity')?.value || '台中市';
+} else if (bType === 'custom-group') {
+bObj.title = block.querySelector('.group-title-input')?.value || '';
+bObj.subItems = [];
+block.querySelectorAll('.sub-item-input').forEach(inp => bObj.subItems.push(inp.value));
+}
+stateData.blocks.push(bObj);
+}
+
+let database = JSON.parse(localStorage.getItem('campfire_json_vault_db') || '{}');
+database[name] = stateData;
+localStorage.setItem('campfire_json_vault_db', JSON.stringify(database));
+
+alert(`💾 草稿「${name}」已成功存入本地 JSON 資料庫！重新整理網頁也原汁原味。`);
+refreshTemplateList();
+}
+
+function refreshTemplateList() {
+const select = document.getElementById('savedTemplatesSelect');
+select.innerHTML = '<option value="">-- 請選擇歷史範本 --</option>';
+let database = JSON.parse(localStorage.getItem('campfire_json_vault_db') || '{}');
+for(let key in database) { select.options.add(new Option(key, key)); }
+}
+
+function loadSelectedTemplate() {
+const name = document.getElementById('savedTemplatesSelect').value;
+if(!name) return;
+let database = JSON.parse(localStorage.getItem('campfire_json_vault_db') || '{}');
+const data = database[name];
+if(!data) return;
+
+// 還原常駐核心基本欄位
+document.getElementById('importantNotice').value = data.meta.importantNotice || '';
+document.getElementById('selYear').value = data.meta.selYear;
+document.getElementById('selMonth').value = data.meta.selMonth;
+updateDays();
+document.getElementById('selDay').value = data.meta.selDay;
+document.getElementById('selStartHour').value = data.meta.selStartHour;
+document.getElementById('selStartMinute').value = data.meta.selStartMinute;
+document.getElementById('selEndHour').value = data.meta.selEndHour;
+document.getElementById('selEndMinute').value = data.meta.selEndMinute;
+document.getElementById('eventType').value = data.meta.eventType;
+document.getElementById('customEventType').value = data.meta.customEventType || '';
+document.getElementById('nameZh').value = data.meta.nameZh || '';
+document.getElementById('nameEn').value = data.meta.nameEn || '';
+document.getElementById('location').value = data.meta.location;
+document.getElementById('customLocation').value = data.meta.customLocation || '';
+
+const hearts = document.getElementsByName('heartSelect');
+for(let i=0; i<hearts.length; i++) { if(hearts[i].value === data.meta.heartSelect) hearts[i].checked = true; }
+
+// 依序列陣全新架構 Canvas DOM 物件
+const container = document.getElementById('mainCanvasContainer');
+container.innerHTML = '';
+
+data.blocks.forEach(b => {
+if (b.type === 'rewards') {
+container.insertAdjacentHTML('beforeend', createRewardsBlockHtml(b.stickerCustom || '', b.serialVal || ''));
+const blockNode = container.lastElementChild;
+if(b.stickerRule) blockNode.querySelector('#stickerRuleSelect').value = b.stickerRule;
+if(b.extraRewards) {
+b.extraRewards.forEach(ex => {
+const targetContainer = blockNode.querySelector('#rewardsList');
+const nextIdx = targetContainer.children.length + 1;
+const row = document.createElement('div');
+row.className = "reward-row-item bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-sm space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-3";
+row.innerHTML = `<div class="flex items-center justify-between sm:justify-start gap-2"><span class="font-bold text-sm text-pink-600 w-5 text-center select-none reward-idx-label">${nextIdx}.</span></div><div class="grid grid-cols-3 gap-2 flex-1"><input type="text" value="${ex.title}" placeholder="加碼項目" class="reward-title col-span-1 px-2 py-1.5 border border-pink-300 rounded-lg text-xs font-semibold bg-white focus:outline-none"><input type="text" value="${ex.val}" placeholder="請填寫發放規則方式" oninput="compileAllText()" class="reward-val col-span-2 px-2 py-1.5 border border-pink-300 rounded-lg text-xs focus:outline-none bg-white"></div><div class="flex justify-end gap-1 text-xs pt-1 sm:pt-0 text-nowrap"><button type="button" onclick="moveRowUp(this, 'reward-row-item')" class="bg-slate-50 border px-1.5 py-0.5 rounded cursor-pointer">🔼</button><button type="button" onclick="moveRowDown(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔽</button><button type="button" onclick="removeRow(this, 'reward-row-item')" class="bg-white border text-red-500 rounded px-1.5 py-0.5 cursor-pointer">✕</button></div>`;
+targetContainer.appendChild(row);
+});
+}
+toggleStickerCustomInput();
+} else if (b.type === 'activities') {
+container.insertAdjacentHTML('beforeend', createActivitiesBlockHtml());
+const blockNode = container.lastElementChild;
+
+const hrSels = blockNode.querySelectorAll('#photoHour, #endTextHour');
+hrSels.forEach(sel => {
+sel.innerHTML = '';
+for(let h=0; h<=23; h++) sel.options.add(new Option(h.toString().padStart(2,'0')+'點', h.toString().padStart(2,'0')));
+});
+const minSels = blockNode.querySelectorAll('#photoMinute, #endTextMinute');
+minSels.forEach(sel => {
+sel.innerHTML = '';
+for(let m=0; m<=59; m++) sel.options.add(new Option(m.toString().padStart(2,'0')+'分', m.toString().padStart(2,'0')));
+});
+
+if(b.photoH) blockNode.querySelector('#photoHour').value = b.photoH;
+if(b.photoM) blockNode.querySelector('#photoMinute').value = b.photoM;
+if(b.endH) blockNode.querySelector('#endTextHour').value = b.endH;
+if(b.endM) blockNode.querySelector('#endTextMinute').value = b.endM;
+
+if(b.extraActs) {
+b.extraActs.forEach(val => {
+const targetContainer = blockNode.querySelector('#activitiesList');
+const nextIdx = targetContainer.children.length;
+const lastNode = targetContainer.lastElementChild;
+const row = document.createElement('div');
+row.className = "act-row-item bg-white p-3 rounded-xl border border-amber-200 shadow-sm text-sm flex gap-3 items-center";
+row.innerHTML = `<span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">${nextIdx}.</span><input type="text" value="${val}" placeholder="請輸入流程" oninput="compileAllText()" class="custom-act-input flex-1 px-3 py-2 border border-amber-300 rounded-xl bg-white focus:outline-none text-xs sm:text-sm"><div class="flex gap-1 text-xs text-nowrap"><button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-slate-50 border px-1.5 py-0.5 rounded cursor-pointer">🔼</button><button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔽</button><button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border text-red-500 rounded px-1.5 py-0.5 cursor-pointer">✕</button></div>`;
+targetContainer.insertBefore(row, lastNode);
+});
+reindexRows(blockNode.querySelector('#activitiesList'), 'act-row-item');
+}
+} else if (b.type === 'city-config') {
+container.insertAdjacentHTML('beforeend', createCityBlockHtml());
+if(b.city) container.lastElementChild.querySelector('#selCity').value = b.city;
+} else if (b.type === 'custom-group') {
+groupCounter++;
+container.insertAdjacentHTML('beforeend', createCustomBlockHtml(groupCounter, b.title || ''));
+const blockNode = container.lastElementChild;
+if(b.subItems) {
+b.subItems.forEach((subVal, sIdx) => {
+createSubItemRowInBlock(blockNode.querySelector('.add-sub-btn'), subVal);
+});
+}
+}
+});
+
+reindexMainBlocks();
+toggleCustomEvent();
+toggleCustomLocation();
+autoFillDateTime();
+alert(`✨ 範本「${name}」已成功由 JSON 資料庫還原恢復！`);
+}
+
+function deleteSelectedTemplate() {
+const name = document.getElementById('savedTemplatesSelect').value; if(!name) return;
+if(confirm(`確定完全刪除本機草稿「${name}」？`)) {
+let database = JSON.parse(localStorage.getItem('campfire_json_vault_db') || '{}');
+delete database[name]; localStorage.setItem('campfire_json_vault_db', JSON.stringify(database));
+refreshTemplateList();
+}
+}
+
+/* ------------------ 🎨 靜態節點模型工廠（JSON 重建專用） ------------------ */
+function createRewardsBlockHtml(stickerCustom = '', serialVal = '') {
+return `<div class="canvas-block bg-slate-50 rounded-2xl border border-slate-200 shadow-sm overflow-hidden" data-block-type="rewards"><div class="flex flex-wrap justify-between items-center bg-slate-200/80 px-4 py-2.5 border-b border-slate-300 gap-2 select-none"><div class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-6 h-5 rounded-full inline-flex items-center justify-center text-xs font-bold block-idx-label">3.</span><span class="text-sm font-bold text-slate-700">🎁 【實體獎勵發放】規則設定</span></div><div class="flex items-center gap-1 text-xs"><button type="button" onclick="moveBlockUp(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔼 上移大項</button><button type="button" onclick="moveBlockDown(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔽 下移大項</button><button type="button" onclick="removeBlock(this)" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-1 px-2 rounded border border-red-200 shadow-sm cursor-pointer">✕ 刪除</button></div></div><div class="p-4 sm:p-5 space-y-4"><div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-500">配置各項實體好禮發放細則：</span><button type="button" onclick="addRewardRow()" class="bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold py-1 px-2.5 rounded-lg shadow transition cursor-pointer">➕ 新增額外獎勵項目</button></div><div id="rewardsList" class="space-y-3"><div class="reward-row-item bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-sm space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-3"><div class="flex items-center justify-between sm:justify-start gap-2"><span class="font-bold text-pink-600 w-5 text-center select-none reward-idx-label">1.</span></div><div class="grid grid-cols-3 gap-2 flex-1"><input type="text" value="活動紀念貼紙" class="col-span-1 px-2 py-1.5 border rounded-lg bg-slate-100 font-semibold text-xs sm:text-sm cursor-not-allowed" readonly><div class="col-span-2 flex flex-col gap-1.5"><select id="stickerRuleSelect" onchange="toggleStickerCustomInput();" class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none text-xs sm:text-sm bg-white font-medium text-pink-950"><option value="歡迎於集合時索取，數量有限，發完為止">歡迎於集合時索取，數量有限，發完為止</option><option value="其他">其他 (點擊自訂輸入)</option></select><input type="text" id="stickerCustomInput" value="${stickerCustom}" placeholder="請填寫自訂發放方式" oninput="compileAllText()" class="hidden w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none text-xs sm:text-sm"></div></div><div class="flex justify-end gap-1 text-xs pt-1 sm:pt-0 text-nowrap"><button type="button" onclick="moveRowUp(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔼</button><button type="button" onclick="moveRowDown(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔽</button><button type="button" onclick="removeRow(this, 'reward-row-item')" class="bg-white border border-red-200 px-1.5 py-0.5 text-red-500 rounded cursor-pointer">✕</button></div></div><div class="reward-row-item bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-sm space-y-2 sm:space-y-0 sm:flex sm:items-start sm:gap-3"><div class="flex items-center justify-between sm:justify-start gap-2 pt-1.5"><span class="font-bold text-pink-600 w-5 text-center select-none reward-idx-label">2.</span></div><div class="grid grid-cols-3 gap-2 flex-1"><input type="text" value="序號卡發放方式" class="reward-fixed-label col-span-1 px-2 py-1.5 border rounded-lg bg-slate-100 font-semibold text-xs sm:text-sm cursor-not-allowed" readonly><textarea id="serialCardTextArea" placeholder="請填寫發放方式，支援多行輸入及換行編輯詳細支數規則..." oninput="compileAllText()" class="reward-textarea-input col-span-2 px-2 py-1.5 border border-gray-300 rounded-lg focus:outline-none text-xs sm:text-sm bg-white h-24 resize-y leading-relaxed">${serialVal}</textarea></div><div class="flex justify-end gap-1 text-xs pt-1 sm:pt-1.5 text-nowrap"><button type="button" onclick="moveRowUp(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔼</button><button type="button" onclick="moveRowDown(this, 'reward-row-item')" class="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer">🔽</button><button type="button" onclick="removeRow(this, 'reward-row-item')" class="bg-white border border-red-200 px-1.5 py-0.5 text-red-500 rounded cursor-pointer">✕</button></div></div></div></div>`;
+}
+
+function createActivitiesBlockHtml() {
+return `<div class="canvas-block bg-slate-50 rounded-2xl border border-slate-200 shadow-sm overflow-hidden" data-block-type="activities"><div class="flex flex-wrap justify-between items-center bg-slate-200/80 px-4 py-2.5 border-b border-slate-300 gap-2 select-none"><div class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-6 h-5 rounded-full inline-flex items-center justify-center text-xs font-bold block-idx-label">4.</span><span class="text-sm font-bold text-slate-700">📋 【活動內容】時程表與彈性擴充</span></div><div class="flex items-center gap-1 text-xs"><button type="button" onclick="moveBlockUp(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔼 上移大項</button><button type="button" onclick="moveBlockDown(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔽 下移大項</button><button type="button" onclick="removeBlock(this)" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-1 px-2 rounded border border-red-200 shadow-sm cursor-pointer">✕ 刪除</button></div></div><div class="p-4 sm:p-5 space-y-4"><div class="flex justify-between items-center"><span class="text-xs font-bold text-slate-500">自由調配、增減或移動內部時程順序：</span><button type="button" onclick="addActivityRow()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-1 px-2.5 rounded-lg shadow transition cursor-pointer">➕ 插入自訂活動內容</button></div><div id="activitiesList" class="space-y-3"><div class="act-row-item bg-slate-100 p-3 rounded-xl border border-slate-200 text-sm text-slate-600 flex gap-3 items-center" data-raw-text="進Campfire點擊「報到」，報到後進遊戲頁面領取限時調查（調查時限八小時）。（調查內容請詳閱群組頻道）"><span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">1.</span><div class="flex-1 text-xs sm:text-sm">進Campfire點擊「報到」，報到後進遊戲頁面領取限時調查（調查時限八小時）。<br>（調查內容請詳閱群組頻道）</div><div class="flex gap-1 text-xs text-nowrap"><button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔼</button><button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔽</button><button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border border-red-200 px-1 text-red-500 rounded cursor-pointer">✕</button></div></div><div class="act-row-item bg-white p-3 rounded-xl border border-slate-300 shadow-sm text-sm flex gap-3 items-center"><span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">2.</span><div class="flex-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center"><div class="font-bold text-slate-700 text-xs sm:text-sm whitespace-nowrap">📸 大合照幾點拍？</div><div class="flex items-center gap-1"><select id="photoHour" onchange="compileAllText()" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs"></select><span class="text-xs font-bold text-gray-400">：</span><select id="photoMinute" onchange="compileAllText()" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs"></select></div></div><div class="flex gap-1 text-xs text-nowrap"><button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔼</button><button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔽</button><button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border border-red-200 px-1 text-red-500 rounded cursor-pointer">✕</button></div></div><div class="act-row-item bg-white p-3 rounded-xl border border-slate-300 shadow-sm text-sm flex gap-3 items-center"><span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">3.</span><div class="flex-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center"><div class="font-bold text-slate-700 text-xs sm:text-sm whitespace-nowrap">⏳ 活動持續至幾點結束？</div><div class="flex items-center gap-1"><select id="endTextHour" onchange="compileAllText()" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs"></select><span class="text-xs font-bold text-gray-400">：</span><select id="endTextMinute" onchange="compileAllText()" class="px-2 py-1 border border-gray-300 rounded-lg bg-white text-xs"></select></div></div><div class="flex gap-1 text-xs text-nowrap"><button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔼</button><button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔽</button><button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border border-red-200 px-1 text-red-500 rounded cursor-pointer">✕</button></div></div><div class="act-row-item bg-slate-100 p-3 rounded-xl border border-slate-200 text-sm text-slate-600 flex gap-3 items-center" data-raw-text="若有未盡事宜，主辦方可隨時調整。"><span class="font-bold text-amber-600 w-5 text-center act-idx-label select-none">4.</span><div class="flex-1 text-xs sm:text-sm">若有未盡事宜，主辦方可隨時調整。</div><div class="flex gap-1 text-xs text-nowrap"><button type="button" onclick="moveRowUp(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔼</button><button type="button" onclick="moveRowDown(this, 'act-row-item')" class="bg-white border border-slate-300 px-1 rounded cursor-pointer">🔽</button><button type="button" onclick="removeRow(this, 'act-row-item')" class="bg-white border border-red-200 px-1 text-red-500 rounded cursor-pointer">✕</button></div></div></div></div>`;
+}
+
+function createCityBlockHtml() {
+return `<div class="canvas-block bg-slate-50 rounded-2xl border border-slate-200 shadow-sm overflow-hidden" data-block-type="city-config"><div class="flex flex-wrap justify-between items-center bg-slate-200/80 px-4 py-2.5 border-b border-slate-300 gap-2 select-none"><div class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-6 h-5 rounded-full inline-flex items-center justify-center text-xs font-bold block-idx-label">5.</span><span class="text-sm font-bold text-slate-700">🌍 【注意事項】停班停課公告縣市設定</span></div><div class="flex items-center gap-1 text-xs"><button type="button" onclick="moveBlockUp(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔼 上移大項</button><button type="button" onclick="moveBlockDown(this)" class="bg-white hover:bg-slate-100 text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔽 下移大項</button><button type="button" onclick="removeBlock(this)" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-1 px-2 rounded border border-red-200 shadow-sm cursor-pointer">✕ 刪除</button></div></div><div class="p-4 sm:p-5"><label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1">👉 請選擇活動舉辦的「縣市」</label><select id="selCity" onchange="compileAllText()" class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white font-semibold text-teal-900 focus:outline-none"><option value="台中市" selected>台中市</option><option value="台北市">台北市</option><option value="新北市">新北市</option><option value="桃園市">桃園市</option><option value="台南市">台南市</option><option value="高雄市">高雄市</option><option value="基隆市">基隆市</option><option value="新竹市">新竹市</option><option value="新竹縣">新竹縣</option><option value="苗栗縣">苗栗縣</option><option value="彰化縣">彰化縣</option><option value="南投縣">南投縣</option><option value="雲林縣">雲林縣</option><option value="嘉義市">嘉義市</option><option value="嘉義縣">嘉義縣</option><option value="屏東縣">屏東縣</option><option value="宜蘭縣">宜蘭縣</option><option value="花蓮縣">花蓮縣</option><option value="台東縣">台東縣</option><option value="澎湖縣">澎湖縣</option><option value="金門縣">金門縣</option><option value="連江縣">連江縣</option></select></div></div>`;
+}
+
+function createCustomBlockHtml(gId, titleVal = '') {
+return `<div class="canvas-block bg-slate-50 rounded-2xl border border-slate-200 shadow-sm overflow-hidden" id="big-group-${gId}" data-block-type="custom-group"><div class="flex flex-wrap justify-between items-center bg-slate-200/80 px-4 py-2.5 border-b border-slate-300 gap-2 select-none"><div class="flex items-center gap-2"><span class="bg-indigo-600 text-white w-8 h-5 rounded-full inline-flex items-center justify-center text-xs font-bold block-idx-label"></span><span class="text-sm font-bold text-slate-700">⚙️ 【自訂大項目】</span></div><div class="flex items-center gap-1 text-xs"><button type="button" onclick="moveBlockUp(this)" class="bg-white text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔼 上移大項</button><button type="button" onclick="moveBlockDown(this)" class="bg-white text-slate-700 font-semibold py-1 px-2 rounded border border-slate-300 shadow-sm cursor-pointer">🔽 下移大項</button><button type="button" onclick="removeBlock(this)" class="bg-red-50 text-red-600 font-semibold py-1 px-2 rounded border border-red-200 shadow-sm cursor-pointer">✕ 刪除</button></div></div><div class="p-4 sm:p-5 space-y-4"><div><label class="block text-sm font-bold text-slate-700 mb-1">🏷️ 請輸入大標題名稱（自動包覆 【】 括弧）：</label><div class="flex items-center gap-1"><span class="text-xl font-black text-slate-400 select-none">【</span><input type="text" value="${titleVal}" placeholder="例如：加碼抽獎活動" oninput="compileAllText()" class="group-title-input w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold bg-white focus:outline-none"><span class="text-xl font-black text-slate-400 select-none">】</span></div></div><div><div class="flex justify-between items-center bg-slate-100 p-2 rounded-xl mb-2"><span class="text-xs font-bold text-slate-500">📄 內嵌小標題流程列表：</span><button type="button" onclick="createSubItemRowInBlock(this)" class="add-sub-btn bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-1 px-2.5 rounded-lg shadow transition cursor-pointer">➕ 新增該項目的小標題</button></div><div class="sub-items-box space-y-2"></div></div></div></div>`;
+}
+
+function createSubItemRowHtml(textVal = '') {
+return `<div class="sub-row-item bg-white p-2 rounded-xl border border-slate-200 shadow-sm flex gap-3 items-center text-sm"><span class="font-bold text-slate-400 w-5 text-center select-none sub-item-idx">1.</span><input type="text" value="${textVal}" placeholder="請輸入小標題公告內容" oninput="compileAllText()" class="sub-item-input flex-1 px-2 py-1.5 border border-slate-300 rounded-lg focus:outline-none text-xs sm:text-sm bg-white"><div class="flex gap-1 text-xs text-nowrap"><button type="button" onclick="moveRowUp(this, 'sub-row-item')" class="bg-slate-50 border px-1 rounded cursor-pointer">🔼</button><button type="button" onclick="moveRowDown(this, 'sub-row-item')" class="bg-slate-50 border px-1 rounded cursor-pointer">🔽</button><button type="button" onclick="removeRow(this, 'sub-row-item')" class="text-slate-400 hover:text-red-500 font-bold w-5 text-center cursor-pointer">✕</button></div></div>`;
+}
+
+/* ------------------ 🏃‍♂️ 專屬動作：智慧跳轉 Campfire App 直達建立活動 ------------------ */
+function goToCampfireApp() {
+window.open('https://campfire.onelink.me/eBr8?af_dp=campfire://&af_force_deeplink=true&deep_link_sub1=cj1jbHVicyZjPWE0ODNiMDUwLWZhMjUtNDU2Zi05MWZmLTI3YzQzZGM2OWUyMyZpPXRydWU=', '_blank');
+}
+
+/* ------------------ 🚀 LINE / Campfire 即時公告中心獨立編譯（100% 輸出成功） ------------------ */
+function compileNoticeText() {
+const monthSel = document.getElementById('noticeMonth');
+const daySel = document.getElementById('noticeDay');
+if(!monthSel || !daySel) return;
+
+const month = monthSel.value;
+const day = daySel.value;
+const templateType = document.getElementById('noticeTypeSelect').value;
+const dateStr = `${month}/${day}`;
+
+let baseTitle = ""; let baseContent = "";
+
+if (templateType === "1") {
+const hero = document.getElementById('noticeHeroInput').value.trim() || '［本次活動主角］';
+const rule = document.getElementById('noticeRuleInput').value.trim() || '［發放規則，例如：iv67（10/10/10］）';
+const limit = document.getElementById('noticeLimitInput').value.trim() || '［數字］';
+const url = document.getElementById('noticeUrlInput').value.trim() || '［見面會連結］';
+const endHour = document.getElementById('noticeEndHourSelect').value;
+const endMin = document.getElementById('noticeEndMinuteSelect').value;
+
+baseTitle = `【${dateStr} 見面會地點公告】`;
+baseContent = `集合地點：台中公園北門樓望月亭\n集合時間：13:40\n\n🏆獎勵發放方式：\n• 規則：見面會活動期間，現場捕捉到「${hero}」，且 ${rule}。\n• 頒獎：限量${limit}名（發完為止），符合資格者將獲得序號卡一張（需當場檢查冒險筆記，確認為當下捕捉）。\n\n🔗見面會：${url}\n\n👉 現場見面會活動若序號卡發完，活動即提前結束；若尚未發完，活動將持續至 ${endHour}:${endMin} 結束。\n👉 對戰順序以現場公告為準。\n👉 過馬路請務必遵守交通規則，安全至上。`;
+
+} else if (templateType === "2") {
+let eventName = document.getElementById('noticeEventDropdown').value;
+if (eventName === '其他') { eventName = document.getElementById('noticeCustomEventType').value.trim() || '［自訂活動種類］'; }
+const reason = document.getElementById('noticeRainReason').value.trim() || '［影響內容］';
+
+baseTitle = `【${dateStr} 見面會公告】`;
+baseContent = `明天是${eventName}，因受到${reason}影響，明天降雨機率提高，請大家出門參加見面會前留意社群公告，如雨勢過大，為了安全起見，見面會將取消。\n\n出門時請務必注意行車安全，記得攜帶雨具。\n\n造成不便，敬請見諒`;
+
+} else if (templateType === "3") {
+baseTitle = `【${dateStr} 見面會取消公告】`;
+baseContent = `因天候不佳，目前持續降雨，為了安全起見，依照官方規定，本次見面會將取消。造成不便，敬請見諒。\n\n👉 路面濕滑，行車務必小心\n👉 請以安全為優先，避免外出遊玩`;
+}
+
+document.getElementById('previewTitleTab2').value = `${baseTitle}\n\n${baseContent}\n\n@all`;
+document.getElementById('previewContentTab2').value = `${baseTitle}\n\n${baseContent}\n\n@everyone`;
+}
+
+/* ------------------ 🚀 見面會模板中心核心編譯器（100% 作用域安全隔離） ------------------ */
+function compileAllText() {
+const importantNotice = document.getElementById('importantNotice')?.value.trim() || '';
+const dateCode = document.getElementById('dateCode')?.value || '［活動日期］';
+const nameZh = document.getElementById('nameZh')?.value.trim() || '［活動名稱（中文）］';
+const nameEn = document.getElementById('nameEn')?.value.trim() || '［活動名稱（英文）］';
+
+let eventType = document.getElementById('eventType')?.value || '社群日';
+if (eventType === '其他') { eventType = document.getElementById('customEventType').value.trim() || '［自訂活動種類］'; }
+
+const hearts = document.getElementsByName('heartSelect');
+let selectedHeart = '🩷';
+for (let i = 0; i < hearts.length; i++) { if (hearts[i].checked) { selectedHeart = hearts[i].value; break; } }
+
+const titleOutputText = `${dateCode} ${nameZh} ${nameEn} 《${eventType}》${selectedHeart}`;
+
+let finalSections = [];
+if (importantNotice) { finalSections.push(`【重要公告】\n${importantNotice}`); }
+
+let location = document.getElementById('location')?.value || '台中公園北門樓望月亭';
+if (location === '其他') { location = document.getElementById('customLocation').value.trim() || '［自訂集合地點］'; }
+const meetTimeStr = `${document.getElementById('meetHour')?.value || '13'}:${document.getElementById('meetMinute')?.value || '40'}`;
+const fullDatetime = document.getElementById('fullDatetime')?.value || '［見面會時間軸］';
+
+finalSections.push(`【集合地點、團體照拍攝】\n👉集合地點：${location}\n👉集合時間：${meetTimeStr}\n\n見面會時間：${fullDatetime}`);
+
+const container = document.getElementById('mainCanvasContainer');
+if(container) {
+const canvasBlocks = container.children;
+for (let i = 0; i < canvasBlocks.length; i++) {
+let block = canvasBlocks[i];
+let blockType = block.getAttribute('data-block-type');
+
+if (blockType === 'rewards') {
+let rewardsText = '【實體獎勵發放】\n';
+let targetRewardRows = block.querySelectorAll('#rewardsList .reward-row-item');
+let subRewardLines = [];
+targetRewardRows.forEach((row, rIdx) => {
+let titleStr = ""; let valueStr = ""; let stickerSelect = row.querySelector('#stickerRuleSelect');
+if (stickerSelect) {
+titleStr = "活動紀念貼紙"; let selVal = stickerSelect.value;
+valueStr = (selVal === '其他') ? (row.querySelector('#stickerCustomInput')?.value.trim() || '［未填寫］') : selVal;
+} else {
+let labelInput = row.querySelector('.reward-fixed-label');
+let titleInput = row.querySelector('.reward-title');
+let valElement = row.querySelector('.reward-val') || row.querySelector('#serialCardTextArea');
+titleStr = labelInput ? "序號卡發放方式" : (titleInput ? titleInput.value.trim() : '項目');
+valueStr = valElement ? valElement.value.trim() : '［未填寫］';
+}
+if (valueStr.endsWith('。')) { valueStr = valueStr.slice(0, -1); }
+subRewardLines.push(`${rIdx+1}. ${titleStr}：${valueStr}。`);
+});
+if (subRewardLines.length > 0) { rewardsText += subRewardLines.join('\n'); finalSections.push(rewardsText); }
+}
+else if (blockType === 'activities') {
+let activityText = '【活動內容】\n';
+// 🌟 核心防污染安全圈：嚴格限制 scope-level 變數
+let targetActivityRows = block.querySelectorAll('#activitiesList .act-row-item');
+let subActivityLines = [];
+targetActivityRows.forEach((row, aIdx) => {
+let lineStr = ""; let isCampfireRow = false;
+if (row.querySelector('#photoHour')) {
+lineStr = `${row.querySelector('#photoHour').value}:${row.querySelector('#photoMinute').value} 拍攝團體照（請大家踴躍參與）`;
+} else if (row.querySelector('#endTextHour')) {
+lineStr = `現場見面會活動若序號卡發完，活動即提前結束；若尚未發完，活動將持續至 ${row.querySelector('#endTextHour').value}:${row.querySelector('#endTextMinute').value} 結束`;
+} else {
+let customInput = row.querySelector('.custom-act-input');
+if (customInput) { lineStr = customInput.value.trim(); }
+else if (row.getAttribute('data-raw-text')) {
+lineStr = row.getAttribute('data-raw-text').trim(); if (lineStr.includes("進Campfire點擊")) { isCampfireRow = true; }
+}
+}
+if (lineStr) {
+if (isCampfireRow) {
+subActivityLines.push(`${aIdx+1}. 進Campfire點擊「報到」，報到後進遊戲頁面領取限時調查（調查時限八小時）。\n（調查內容請詳閱群組頻道）`);
+} else {
+if (lineStr.endsWith('。')) { lineStr = lineStr.slice(0, -1); }
+subActivityLines.push(`${aIdx+1}. ${lineStr}。`);
+}
+}
+});
+if (subActivityLines.length > 0) { activityText += subActivityLines.join('\n'); finalSections.push(activityText); }
+}
+else if (blockType === 'custom-group') {
+let groupTitle = block.querySelector('.group-title-input')?.value.trim() || '自訂項目';
+let customBlockText = `【${groupTitle}】\n`; let subInputs = block.querySelectorAll('.sub-item-input'); let subLines = []; let sCounter = 1;
+subInputs.forEach(input => {
+if (input.value.trim() !== '') {
+let vText = input.value.trim(); if (vText.endsWith('。')) { vText = vText.slice(0, -1); }
+subLines.push(`${sCounter}. ${vText}。`); sCounter++;
+}
+});
+if (subLines.length > 0) { customBlockText += subLines.join('\n'); finalSections.push(customBlockText); }
+}
+}
+}
+
+const selectedCity = document.getElementById('selCity') ? document.getElementById('selCity').value : '台中市';
+let footerText = `【注意事項】\n1. ${eventType}活動內容請詳閱官方網站。\n2. 強烈建議下載campfire的app，不僅可以在群組內的頻道相互討論交流，官方如有意外發生，也才能獲得補償。\n3. 現場嚴禁使用飛人、外掛、非法軟體遊玩。\n4. 參加見面會前請先閱讀「見面會安全須知」。\n5. 如果當天氣候不佳或${selectedCity}政府宣布停班停課，見面會將取消。\n\n*本活動禁止 any 商業行為和政治行為*`;
+finalSections.push(footerText);
+
+document.getElementById('previewTitleTab1').value = titleOutputText;
+document.getElementById('previewContentTab1').value = finalSections.join('\n\n');
+}
+
+function copyField(fieldId, toastId) {
+const copyText = document.getElementById(fieldId); if(!copyText.value) { alert('請先生成公告內容！'); return; }
+if (navigator.clipboard && navigator.clipboard.writeText) {
+navigator.clipboard.writeText(copyText.value).then(() => { showSuccessToast(toastId); }).catch(() => { executeFallbackCopy(copyText, toastId); });
+} else { executeFallbackCopy(copyText, toastId); }
+}
+function executeFallbackCopy(element, toastId) {
+try {
+element.select(); element.setSelectionRange(0, 99999);
+if (document.execCommand('copy')) { showSuccessToast(toastId); } else { alert('💡 請直接長按選取文字進行複製！'); }
+} catch (err) { alert('💡 請直接長按選取文字進行複製！'); }
+}
+function showSuccessToast(toastId) {
+const toast = document.getElementById(toastId); toast.classList.remove('hidden');
+setTimeout(() => { toast.classList.add('hidden'); }, 2500);
+}
+</script>
+</body>
+</html>
